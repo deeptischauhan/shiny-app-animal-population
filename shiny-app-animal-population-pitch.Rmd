@@ -1,0 +1,154 @@
+---
+title: "Animal Population in India"
+author: Deepti Chauhan
+date: July 31, 2020
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+This is a Shiny App which shows the population of elephants, tigers and leopards in different states of India.
+The side panel gives the option of selecting one or more of the animals
+On the main panel is a map drawn using Leaflet package to dynamically show the population. The size of the circle corresponds to the population.
+The color of circle corresponds to the animal selected.
+On clicking on the icons, the user can see the details - Name of the state, name of the animal and the population
+
+## Input
+
+The app takes in input in terms of whether they want to see the population of elephants, tigers and leopards in Indian states. The user is provided a checkbox input type option in the side panel. 
+
+## Output
+```{r echo = TRUE}
+library(shiny)
+library(leaflet)
+shinyUI(fluidPage(
+
+    # Application title
+    titlePanel("Animal Population in India"),
+
+    # Sidebar with a slider input for number of bins
+    sidebarLayout(
+        sidebarPanel(
+			h3("Choose Animals"),
+			checkboxInput("elephant", "Elephants", value = TRUE),
+			checkboxInput("tiger", "Tigers", value = FALSE),
+			checkboxInput("leopard", "Leopards", value = FALSE),
+        ),
+
+        # Show a plot of the generated distribution
+        mainPanel(
+            h3("Population of Animals in Indian States"),
+	    leafletOutput("mapPlot"),
+        )
+    )
+))
+```
+```{r echo = FALSE}
+
+# Define server logic required to draw a histogram
+shinyServer(function(input, output) {
+
+    output$mapPlot <- renderLeaflet({
+
+		checkElephants <- input$elephant
+		checkTigers <- input$tiger
+		checkLeopards <- input$leopard
+
+		animalIcon <- iconList(
+		  elephantIcon = makeIcon("https://static.thenounproject.com/png/9587-200.png", "https://static.thenounproject.com/png/9587-200.png", 24, 24),
+		  tigerIcon = makeIcon("https://static.thenounproject.com/png/912730-200.png", "https://static.thenounproject.com/png/912730-200.png", 24, 24),
+		  leopardIcon = makeIcon("https://static.thenounproject.com/png/246357-200.png", "https://static.thenounproject.com/png/246357-200.png", 24, 24)
+		)
+
+		md_states <- data.frame(name = c("Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar",
+										 "Chhattisgarh", "Goa", "Gujarat", "Jharkhand", "Karnataka", "Kerala","Madhya Pradesh","Maharashtra","Meghalaya","Mizoram","Nagaland","Odisha","Rajasthan","Tamil Nadu","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"),
+								pop_elephants = c(65, 1614, 5719, 25, 247, 0, 0, 679, 6049, 3054,7,6,1754,7,432,1966,84,2761,102,232,1839,194),
+								pop_tigers = c( 0, 679, 6049, 5719, 25, 247, 0,1966,84,2761,102,232,3054,7,6,1754,7,432,65, 1614,1839,194),
+								pop_leopards = c( 247, 0, 0, 25, 3054,7,1614, 5719,232,1839,194,6,1754,7,432,1966,84,2761,102,679, 6049,65),
+								lat = c(14.7504291,27.10039878, 26.7499809, 25.78541445, 22.09042035, 15.491997, 23, 	23.80039349, 12.57038129, 	8.900372741, 21.30039105, 19.25023195, 25.57049217, 23.71039899, 25.6669979, 19.82042971, 	26.44999921, 	12.92038576, 23.83540428, 27.59998069, 30.32040895, 	22.58039044),
+								lng = c(78.57002559,93.61660071, 94.21666744, 87.4799727, 82.15998734, 73.81800065, 72, 86.41998572, 	76.91999711, 76.56999263, 76.13001949, 	73.16017493, 	91.8800142, 92.72001461, 	94.11657019, 85.90001746, 74.63998124, 79.15004187, 91.27999914, 78.05000565, 78.05000565, 88.32994665))
+		if(checkElephants==TRUE && checkTigers==TRUE && checkLeopards==TRUE)
+		{
+			md_states %>%
+			  leaflet() %>%
+			  addTiles() %>%
+				addMarkers(icon = animalIcon$elephantIcon, popup = paste(md_states$name," elephants ",md_states$pop_elephants)) %>%
+				addCircles(weight = 1, radius = md_states$pop_elephants*100, color = c("navy blue","red","orange")) %>%
+				addMarkers(icon = animalIcon$tigerIcon, popup = paste(md_states$name," tigers ",md_states$pop_tigers)) %>%
+				addCircles(weight = 1, radius = md_states$pop_tigers*100, color = "red") %>%
+				addMarkers(icon = animalIcon$leopardIcon, popup = paste(md_states$name," leopards ",md_states$pop_leopards)) %>%
+				addCircles(weight = 1, radius = md_states$pop_leopards*100, color = "orange")
+		}
+		else if(checkElephants==TRUE && checkTigers==TRUE && checkLeopards==FALSE)
+		{
+			md_states %>%
+			  leaflet() %>%
+			  addTiles() %>%
+				addMarkers(icon = animalIcon$elephantIcon, popup = paste(md_states$name," elephants ",md_states$pop_elephants)) %>%
+				addCircles(weight = 1, radius = md_states$pop_elephants*100, color = "navy blue") %>%
+				addMarkers(icon = animalIcon$tigerIcon, popup = paste(md_states$name," tigers ",md_states$pop_tigers)) %>%
+				addCircles(weight = 1, radius = md_states$pop_tigers*100, color = "red")
+		}
+		else if(checkElephants==TRUE && checkTigers==FALSE && checkLeopards==TRUE)
+		{
+			md_states %>%
+			  leaflet() %>%
+			  addTiles() %>%
+				addMarkers(icon = animalIcon$elephantIcon, popup = paste(md_states$name," elephants ",md_states$pop_elephants)) %>%
+				addCircles(weight = 1, radius = md_states$pop_elephants*100, color = "navy blue") %>%
+				addMarkers(icon = animalIcon$leopardIcon, popup = paste(md_states$name," leopards ",md_states$pop_leopards)) %>%
+				addCircles(weight = 1, radius = md_states$pop_leopards*100, color = "orange")
+		}
+		else if(checkElephants==FALSE && checkTigers==TRUE && checkLeopards==TRUE)
+		{
+			md_states %>%
+			  leaflet() %>%
+			  addTiles() %>%
+				addMarkers(icon = animalIcon$tigerIcon, popup = paste(md_states$name," tigers ",md_states$pop_tigers)) %>%
+				addCircles(weight = 1, radius = md_states$pop_tigers*100, color = "red") %>%
+				addMarkers(icon = animalIcon$leopardIcon, popup = paste(md_states$name," leopards ",md_states$pop_leopards)) %>%
+				addCircles(weight = 1, radius = md_states$pop_leopards*100, color = "orange")
+		}
+		else if(checkElephants==TRUE && checkTigers==FALSE && checkLeopards==FALSE)
+		{
+			md_states %>%
+			  leaflet() %>%
+			  addTiles() %>%
+				addMarkers(icon = animalIcon$elephantIcon, popup = paste(md_states$name," elephants ",md_states$pop_elephants)) %>%
+				addCircles(weight = 1, radius = md_states$pop_elephants*100, color = "navy blue")
+		}
+		else if(checkElephants==FALSE && checkTigers==TRUE && checkLeopards==FALSE)
+		{
+			md_states %>%
+			  leaflet() %>%
+			  addTiles() %>%
+				addMarkers(icon = animalIcon$tigerIcon, popup = paste(md_states$name," tigers ",md_states$pop_tigers)) %>%
+				addCircles(weight = 1, radius = md_states$pop_tigers*100, color = "red")
+		}
+		else if(checkElephants==FALSE && checkTigers==FALSE && checkLeopards==TRUE)
+		{
+			md_states %>%
+			  leaflet() %>%
+			  addTiles() %>%
+				addMarkers(icon = animalIcon$leopardIcon, popup = paste(md_states$name," leopards ",md_states$pop_leopards)) %>%
+				addCircles(weight = 1, radius = md_states$pop_leopards*100, color = "orange")
+		}
+		else if(checkElephants==FALSE && checkTigers==FALSE && checkLeopards==FALSE)
+		{
+			md_states %>%
+			  leaflet() %>%
+			  addTiles()
+		}
+
+    })
+
+})
+```
+
+## Final Slide
+
+Thank You!
